@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register Page</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-light bg-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand text-white" href="#">Register Page</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item">
+            <a class="nav-link active text-white" aria-current="page" href="/">Home</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link text-white"  href="/register">Register</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link text-white" href="/login">Login</a>
+          </li>
+        
+        </ul>
+       
+      </div>
+    </div>
+  </nav>
+
+
+      <div class="container my-5">
+        <div class="card" style="width: 100%;">
+            
+            <div class="card-body">
+              <h5 class="card-title">Register Form</h5>
+              <!-- <form onsubmit="return false;" id="form">  -->
+                <form onsubmit="return false;" id="form" enctype="multipart/form-data">
+                <div class="mb-3">
+                  <label for="email" class="form-label">Email address</label>
+                  <input type="email" class="form-control" id="email" autocomplete="off" required aria-describedby="emailHelp">
+                  <div id="emailHelp" class="form-text">We'll never share your email with anyone else.</div>
+                </div>
+               
+
+                <div class="mb-3">
+                  <label for="password" class="form-label">Password</label>
+                  <input type="password" class="form-control" id="password" autocomplete="off" required>
+                </div>
+
+
+                <div class="mb-3">
+                  <label for="course" class="form-label">Select course</label>
+                  <select class="form-select" id="course" required>
+                      <option value="" disabled selected>Select an option</option>
+                      <option value="Java">Java</option>
+                      <option value="Node js">Node js</option>
+                      <option value="Laravel">Laravel</option>
+                  </select>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label">Select gender:</label><br>
+                  <input type="radio" name="gender" value="Male" id="male" required> Male<br>
+                  <input type="radio" name="gender" value="Female" id="female" required> Female<br>
+                  <input type="radio" name="gender" value="Other" id="other" required> Other
+                </div>
+
+                <div class="mb-3">
+                  <label for="skills" class="form-label">Skills</label><br>
+                  <input type="checkbox" name="skills" id="html" value="HTML">&nbsp;&nbsp;HTML<br>
+                  <input type="checkbox" name="skills" id="css" value="CSS">&nbsp;&nbsp;CSS<br>
+                  <input type="checkbox" name="skills" id="JS" value="JS">&nbsp;&nbsp;JS<br>
+                </div>
+
+                <div class="mb-3">
+                  <label for="file" class="form-label">Upload file:</label>
+                  <input type="file" class="form-control" id="file" name="file" required>
+                  <!-- <img id="filePreview" src="<%= user.filePath %>" alt="File Preview" class="mt-2" style="max-width: 50%;"/> -->
+
+                  
+              </div>
+
+                <button type="submit" class="btn btn-primary mb-4">Register</button>
+                <div class="alert alert-danger" style="display: none;" role="alert" id="error"></div>
+                <div class="alert alert-success" style="display: none;" role="alert" id="success"></div>
+              </form>
+            </div>
+          </div>
+          <script src="js/register.js"></script>
+
+</body>
+</html>

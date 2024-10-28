@@ -1,0 +1,687 @@
+1. Setting Up the Database
+Create a MySQL database and a simple table for your data. For this example, let’s create a users table.
+
+sql
+Copy code
+CREATE DATABASE my_database;
+
+USE my_database;
+
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE
+);
+2. Setting Up the Node.js Express Application
+a. Initialize Your Project
+Create a new directory for your project and initialize it.
+
+bash
+Copy code
+mkdir node-crud-html
+cd node-crud-html
+npm init -y
+npm install express mysql2 body-parser cors ejs
+b. Create Your Express Server
+Create a file named server.js and set up a basic Express server with CRUD operations.
+
+javascript
+Copy code
+const express = require('express');
+const mysql = require('mysql2');
+const bodyParser = require('body-parser');
+const path = require('path');
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+
+app.use(bodyParser.urlencoded({ extended: false }));
+
+// Create a MySQL connection
+const db = mysql.createConnection({
+    host: 'localhost',
+    user: 'your_user', // replace with your MySQL username
+    password: 'your_password', // replace with your MySQL password
+    database: 'my_database' // replace with your database name
+});
+
+// Connect to MySQL
+db.connect((err) => {
+    if (err) throw err;
+    console.log('MySQL Connected...');
+});
+
+// Routes
+
+// Home page to list users
+app.get('/', (req, res) => {
+    db.query('SELECT * FROM users', (err, results) => {
+        if (err) throw err;
+        res.render('index', { users: results });
+    });
+});
+
+// Render form to create a new user
+app.get('/users/new', (req, res) => {
+    res.render('new');
+});
+
+// Create a new user
+app.post('/users', (req, res) => {
+    const { name, email } = req.body;
+    db.query('INSERT INTO users (name, email) VALUES (?, ?)', [name, email], (err, result) => {
+        if (err) throw err;
+        res.redirect('/');
+    });
+});
+
+// Render form to edit a user
+app.get('/users/edit/:id', (req, res) => {
+    const userId = req.params.id;
+    db.query('SELECT * FROM users WHERE id = ?', [userId], (err, results) => {
+        if (err) throw err;
+        res.render('edit', { user: results[0] });
+    });
+});
+
+// Update a user
+app.post('/users/update/:id', (req, res) => {
+    const userId = req.params.id;
+    const { name, email } = req.body;
+    db.query('UPDATE users SET name = ?, email = ? WHERE id = ?', [name, email, userId], (err, result) => {
+        if (err) throw err;
+        res.redirect('/');
+    });
+});
+
+// Delete a user
+app.post('/users/delete/:id', (req, res) => {
+    const userId = req.params.id;
+    db.query('DELETE FROM users WHERE id = ?', [userId], (err, result) => {
+        if (err) throw err;
+        res.redirect('/');
+    });
+});
+
+// Start the server
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});
+3. Creating the Views
+Create a folder named views in your project directory. Inside it, create the following EJS files.
+
+a. index.ejs
+This file lists all users and includes links to add and edit users.
+
+html
+Copy code
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management</title>
+</head>
+<body>
+    <h1>User Management</h1>
+    <a href="/users/new">Add New User</a>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% users.forEach(user => { %>
+                <tr>
+                    <td><%= user.id %></td>
+                    <td><%= user.name %></td>
+                    <td><%= user.email %></td>
+                    <td>
+                        <a href="/users/edit/<%= user.id %>">Edit</a>
+                        <form action="/users/delete/<%= user.id %>" method="POST" style="display:inline;">
+                            <button type="submit">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            <% }) %>
+        </tbody>
+    </table>
+</body>
+</html>
+b. new.ejs
+This file provides a form to add a new user.
+
+html
+Copy code
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add User</title>
+</head>
+<body>
+    <h1>Add New User</h1>
+    <form action="/users" method="POST">
+        <label for="name">Name:</label>
+        <input type="text" name="name" required>
+        <br>
+        <label for="email">Email:</label>
+        <input type="email" name="email" required>
+        <br>
+        <button type="submit">Add User</button>
+    </form>
+    <a href="/">Back to User List</a>
+</body>
+</html>
+c. edit.ejs
+This file provides a form to edit an existing user.
+
+html
+Copy code
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit User</title>
+</head>
+<body>
+    <h1>Edit User</h1>
+    <form action="/users/update/<%= user.id %>" method="POST">
+        <label for="name">Name:</label>
+        <input type="text" name="name" value="<%= user.name %>" required>
+        <br>
+        <label for="email">Email:</label>
+        <input type="email" name="email" value="<%= user.email %>" required>
+        <br>
+        <button type="submit">Update User</button>
+    </form>
+    <a href="/">Back to User List</a>
+</body>
+</html>
+4. Running the Application
+Start your MySQL server.
+Run your Node.js server:
+bash
+Copy code
+node server.js
+Open your browser and go to http://localhost:3000.
+5. Testing the CRUD Operations
+You can add new users using the form.
+View the list of users.
+Edit existing users.
+Delete users directly from the list.
+Conclusion
+You now have a basic CRUD application using Node.js, MySQL, and HTML forms. This application can be expanded with features like input validation, user authentication, or a more sophisticated UI using CSS frameworks or libraries like Bootstrap. 
+
+
+const express = require("express");
+const register = require("./register");
+const login = require("./login");
+// const update = require("./update");
+
+// const logout = require("./logout");
+const router = express.Router();
+
+router.post("/register", register);
+router.post("/login", login);
+// router.post("/users/update/<%= user.id %>", update);
+
+module.exports = router;
+
+
+
+const db = require("../routes/db-config");
+const jwt = require("jsonwebtoken");
+const loggeddIn = (req, res, next)=>{
+    if(!req.cookies.userRegistered) return next();
+    try
+    {
+        const decoded = jwt.verify(req.cookies.userRegistered, process.env.JWT_SECRET);
+        db.query("SELECT * FROM users WHERE id=?", [decoded.id], (err, result)=>{
+            if(err) return next(err);
+            req.user = result[0];
+            next();
+        })
+    }
+    catch(err)
+    {
+         next(err);
+    }
+}
+module.exports = loggeddIn;
+
+const jwt = require("jsonwebtoken");
+const db = require("../routes/db-config");
+const bcrypt = require("bcryptjs");
+
+const login = async(req, res)=>{
+    const {email, password} = req.body;
+    if(!email || !password) return res.json({status:"error", error: "Please Enter your email and password"});
+    else
+    {
+        db.query("SELECT * FROM users WHERE email = ?", [email], async(Err, result)=>{
+            if(Err) throw Err;
+            if(!result.length || !await bcrypt.compare(password, result[0].password)) return res.json({status:"error", error:"Incorrect Email or Password"});
+            else
+            {
+                const token = jwt.sign({id:result[0].id}, process.env.JWT_SECRET,{
+                    expiresIn: process.env.JWT_EXPIRES
+                    // httpOnly:true
+                })
+                const cookieOptions = {
+                    expiresIn: new Date(Date.now()+ process.env.COOKIE_EXPIRES*24*60*60*1000),
+                    httpOnly:true
+                }
+                res.cookie("userRegistered", token, cookieOptions);
+                return res.json({status:"success", success:"User has been logged In"});
+            } 
+        })
+    }
+}
+module.exports = login;
+
+const logout = (req, res)=>{
+    res.clearCookie("userRegistered");
+    res.redirect("/");
+}
+module.exports = logout;
+
+const db = require("../routes/db-config");
+const bcrypt = require("bcryptjs");
+
+const register = async(req, res) =>{
+    const {email, password:Npassword} = req.body;
+    if(!email || !Npassword) return res.json({status:"error", error: "Please Enter your email and password"});
+    else
+    {
+        console.log(email);
+        db.query('SELECT email FROM users WHERE email = ?', [email], async(err, result)=>{
+            if (err) throw err;
+            if(result[0]) return res.json({ status:"error", error:"Email has already been registered" });
+            else
+            {
+                const password = await bcrypt.hash(Npassword, 8);
+                console.log(password);
+                db.query('INSERT INTO users SET ?', {email: email, password:password}, (error, results)=>{
+                    if(err) throw error;
+                    return res.json({status:"success", success:"User has bee registered"});
+                });
+            }
+        });
+    }
+}
+
+module.exports = register;
+
+form.addEventListener("submit", ()=>{
+    const login = {
+        email: email.value,
+        password:password.value
+    }
+    fetch("/api/login",
+    {
+        method:"POST",
+        body : JSON.stringify(login),
+        headers:{
+            "Content-Type":"application/json"
+        }
+    }).then(res=>res.json())
+        .then(data=>{
+            if(data.status == "error"){
+                success.style.display="none";
+                error.style.display="block";
+                error.innerText = data.error;
+            }
+            else
+            {
+                error.style.display="none";
+                success.style.display="block";
+                success.innerText = data.success;
+            }
+        })
+});
+
+form.addEventListener("submit", ()=>{
+    const register = {
+        email: email.value,
+        password:password.value
+    }
+    fetch("/api/register",
+    {
+        method:"POST",
+        body : JSON.stringify(register),
+        headers:{
+            "Content-Type":"application/json"
+        }
+    }).then(res=>res.json())
+        .then(data=>{
+            if(data.status == "error"){
+                success.style.display="none";
+                error.style.display="block";
+                error.innerText = data.error;
+            }
+            else
+            {
+                error.style.display="none";
+                success.style.display="block";
+                success.innerText = data.success;
+            }
+        })
+});
+
+   
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Page</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-light bg-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand text-white" href="#">Login Page</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item">
+            <a class="nav-link active text-white" aria-current="page" href="/">Home</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link text-white"  href="/register">Register</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link text-white" href="/login">Login</a>
+          </li>
+        
+        </ul>
+        
+      </div>
+    </div>
+  </nav>
+
+
+      <div class="container my-5">
+        <div class="card" style="width: 100%;">
+            
+            <div class="card-body">
+              <h5 class="card-title">Login Form</h5>
+              <form onsubmit="return false;" id="form"> 
+                <div class="mb-3">
+                  <label for="email" class="form-label">Email address</label>
+                  <input type="email" class="form-control" id="email" aria-describedby="emailHelp" autocomplete="off" required>
+                  <div id="emailHelp" class="form-text">We'll never share your email with anyone else.</div>
+                </div>
+                
+                <div class="mb-3">
+                  <label for="password" class="form-label">Password</label>
+                  <input type="password" class="form-control" id="password" autocomplete="off" required>
+                </div>
+                <button type="submit" class="btn btn-primary mb-4">Login</button>
+                <div class="alert alert-danger" style="display: none;" role="alert" id="error"></div>
+                <div class="alert alert-success" style="display: none;" role="alert" id="success"></div>
+              </form>
+            </div>
+          </div>
+          <script src="js/login.js"></script>
+</body>
+</html>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Page</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-light bg-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand text-white" href="#">Register Page</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item">
+            <a class="nav-link active text-white" aria-current="page" href="/">Home</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link text-white"  href="/register">Register</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link text-white" href="/login">Login</a>
+          </li>
+        
+        </ul>
+       
+      </div>
+    </div>
+  </nav>
+
+
+      <div class="container my-5">
+        <div class="card" style="width: 100%;">
+            
+            <div class="card-body">
+              <h5 class="card-title">Register Form</h5>
+              <form onsubmit="return false;" id="form"> 
+                <div class="mb-3">
+                  <label for="email" class="form-label">Email address</label>
+                  <input type="email" class="form-control" id="email" autocomplete="off" required aria-describedby="emailHelp">
+                  <div id="emailHelp" class="form-text">We'll never share your email with anyone else.</div>
+                </div>
+               
+
+                <div class="mb-3">
+                  <label for="password" class="form-label">Password</label>
+                  <input type="password" class="form-control" id="password" autocomplete="off" required>
+                </div>
+                <button type="submit" class="btn btn-primary mb-4">Register</button>
+                <div class="alert alert-danger" style="display: none;" role="alert" id="error"></div>
+                <div class="alert alert-success" style="display: none;" role="alert" id="success"></div>
+              </form>
+            </div>
+          </div>
+          <script src="js/register.js"></script>
+
+</body>
+</html>
+
+const sql = require("mysql");
+const dotenv = require("dotenv").config();
+const db = sql.createConnection({
+    host:process.env.DATABASE_HOST,
+    user:process.env.DATABASE_USER,
+    password:process.env.DATABASE_PASSWORD,
+    database:process.env.DATABASE,
+})
+
+module.exports = db;
+
+const db = require("./db-config")
+  const express = require('express');
+  const loggeddIn = require("../controllers/loggeddIn");
+  const logout = require("../controllers/logout");
+  const router = express.Router();
+  const updateUser = require("../controllers/update");
+
+  router.get("/", loggeddIn, (req,res)=>{
+    if(req.user){
+      res.render("index", {status:"loggeddIn", user:req.user});
+    }
+    else{
+      res.render("index", {status:"no", user:"nothing"});
+    }
+   
+  });
+
+  router.get("/register", (req,res)=>{
+    res.sendFile("register.html", {root: "./public"});
+  });
+
+  router.get("/login", (req,res)=>{
+    res.sendFile("login.html", {root:"./public/"});
+  });
+  router.get("/logout", logout);
+  module.exports = router;
+
+  <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-dark">
+        <div class="container-fluid">
+          <a class="navbar-brand text-white" href="/">Home Page</a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+              <li class="nav-item">
+                <a class="nav-link active text-white" aria-current="page" href="/">Home</a>
+              </li>
+              <% if(status == "loggeddIn"){%>
+                <li class="nav-item"><a class="nav-link text-white"  href="/users/edit/<%= user.id %>">Edit</a></li>
+                <li class="nav-item"><a class="nav-link text-white" href="logout">Logout</a></li>
+              <% } else {%>
+              
+                <li class="nav-item"><a class="nav-link text-white"  href="/register">Register</a></li>
+                <li class="nav-item"><a class="nav-link text-white" href="/login">Login</a></li>
+                
+              <%}%>
+            </ul>
+            
+          </div>
+        </div>
+      </nav>
+   
+    <div class="container my-5">
+        <div class="card" style="width: 100%;">
+            
+            <div class="card-body">
+              <% if(status == "loggeddIn"){%>
+              <h5 class="card-title">Welcome <%= user.email %></h5>
+              <% } else { %>
+                <h5 class="card-title">Welcome to the site</h5>
+                <% } %>
+              <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
+              <% if(status == "loggeddIn"){%>
+              <button class="btn btn-primary"><a href="/users/edit/<%= user.id %>" style="color: white; text-decoration: none;">Edit</a></button>
+              <button class="btn btn-primary"><a href="/logout" style="color:white; text-decoration: none;">Logout</a></button>
+              <% } else {%>
+                <button class="btn btn-primary"><a href="/login" style="color: white; text-decoration: none;">Login</a></button>
+              <button class="btn btn-primary"><a href="/register" style="color:white; text-decoration: none;">Register</a></button>
+              <%}%>
+            </div>
+          </div>
+    </div>
+</body>
+</html> 
+
+const express = require("express");
+const db = require("./routes/db-config");
+const app = express();
+const cookie = require("cookie-parser");
+const bodyParser = require('body-parser');
+
+
+const PORT = process.env.PORT || 5000;
+app.use("/js", express.static(__dirname+"/public/js"))
+app.use("/css", express.static(__dirname+"/public/css"))
+app.use(bodyParser.json());
+app.set("view engine", "ejs");
+app.set("views", "./views");
+app.use(cookie());
+app.use(express.json());
+db.connect((err)=>{
+    if(err) throw err;
+    console.log("database connected, PORT:"+PORT);
+}) 
+
+app.use("/", require("./routes/pages"));
+app.use("/api", require("./controllers/auth"));
+app.listen(PORT); 
+
+control -update.js
+
+// const updateUser = async (req, res) => {
+
+//     const { email, password, course, gender, skills } = req.body;
+//     const file = req.file;
+
+//     if (!email || !password || !course || !gender || !skills || !file) {
+//         return res.json({ status: "error", error: "Please Enter your email and password, course, gender" +email+" "+password+" "+course+" "+gender+" "+skills+" "+file});
+//     }
+
+//     if(!file)
+//     {
+//         return res.json({status:"error", error:"Please upload a file"});
+//     }
+//      // Validate incoming data
+//      if (!req.user) {
+//         return res.status(401).json({ status: "error", error: "Unauthorized" });
+//     }
+
+//     const updates = {};
+//     if (email) updates.email = email;
+//     if (password) updates.password = await bcrypt.hash(password, 8); // Hash the new password
+//     if (course) updates.course = course;
+//     if (gender) updates.gender = gender;
+//     if (skills) updates.skills = skills.join(",");
+//     if (file) {
+//         // Save the file path
+//         updates.filePath = path.join("uploads", file.filename); // Adjust the path based on your structure
+//     }
+//     console.log(updates);
+//     console.log(file);
+//     const userId = req.user.id; // Assuming req.user is set by loggeddIn middleware
+
+//     db.query("UPDATE users SET ? WHERE id = ?", [updates, userId], (error, results) => {
+//         if (error) {
+//             return res.json({ status: "error", error: "Database error: " + error.message });
+//         }
+
+//         return res.json({ status: "success", success: "User details updated successfully." });
+//     });
+// };
+// const register = async(req, res) =>{
+//     const {email, password:Npassword, course, gender, skills} = req.body;
+//     if(!email || !Npassword || !course || !gender || !skills) return res.json({status:"error", error: "Please Enter your email and password, course, gender"});
+//     else
+//     {
+//         console.log(email);
+//         db.query('SELECT email FROM users WHERE email = ?', [email], async(err, result)=>{
+//             if (err) throw err;
+//             if(result[0]) return res.json({ status:"error", error:"Email has already been registered" });
+//             else
+//             {
+//                 const password = await bcrypt.hash(Npassword, 8);
+//                 console.log(password);
+//                 db.query('INSERT INTO users SET ?', {email: email, password:password, course:course, gender:gender, skills: skills.join(",")}, (error, results)=>{
+//                     if(err) throw error;
+//                     return res.json({status:"success", success:"User has bee registered"});
+//                 });
+//             }
+//         });
+//     }
+// }
